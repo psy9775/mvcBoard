@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.doubles.mvcboard.mappers.article.ArticleMapper">
+
+    <!--등록-->
+    <insert id="create">
+        INSERT INTO tbl_article (
+            article_no
+            , title
+            , content
+            , writer
+            , reg_date
+            , view_cnt
+        ) VALUES (
+            #{articleNo}
+            , #{title}
+            , #{content}
+            , #{writer}
+            , now()
+            , #{viewCnt}
+        )
+    </insert>
+
+    <!--상세-->
+    <select id="read" resultMap="ArticleResultMap">
+        SELECT
+            article_no
+            , title
+            , content
+            , writer
+            , reg_date
+            , view_cnt
+        	, file_cnt
+        FROM
+            tbl_article
+        WHERE
+            article_no = #{articleNo}
+    </select>
+
+    <!--수정-->
+    <update id="update">
+        UPDATE tbl_article
+        SET
+            title = #{title}
+            , content = #{content}
+        WHERE
+            article_no = #{articleNo}
+    </update>
+
+    <!--삭제-->
+    <delete id="delete">
+        DELETE tbl_article
+        WHERE article_no = #{articleNo}
+    </delete>
+
+    <select id="listAll" resultMap="ArticleResultMap">
+        <![CDATA[
+        SELECT
+            article_no
+            , title
+            , content
+            , writer
+            , reg_date
+            , view_cnt
+        	, file_cnt
+        FROM
+            tbl_article
+        WHERE
+            article_no > 0
+        ORDER BY
+            article_no DESC, regdate DESC
+        ]]>
+    </select>
+
+    <!--페이징처리-->
+    <select id="listPaging" resultMap="ArticleResultMap">
+        <![CDATA[
+        select
+            article_no,
+            title,
+            content,
+            writer,
+            reg_date,
+            view_cnt,
+            file_cnt
+        from
+            tbl_article
+        where
+            article_no > 0
+        order by
+            article_no desc,
+            regdate desc
+        limit #{page}, 10
+        ]]>
+    </select>
+
+    <select id="listCriteria" resultMap="ArticleResultMap">
+        <![CDATA[
+        select
+            article_no,
+            title,
+            content,
+            writer,
+            reg_date,
+            view_cnt,
+            file_cnt
+        from
+            tbl_article
+        where
+            article_no > 0
+        order by
+            article_no desc,
+            regdate desc
+        limit #{pageStart}, #{perPageNum}
+        ]]>
+    </select>
+
+    <!--게시글 전체 수 조회-->
+    <select id="countArticles" resultType="int">
+        <![CDATA[
+            select
+                count(*)
+            from
+                tbl_article
+            where
+                article_no > 0
+        ]]>
+    </select>
+
+    <select id="listSearch" resultMap="ArticleResultMap">
+        <![CDATA[
+            select
+                article_no,
+                title,
+                content,
+                writer,
+                reg_date,
+                view_cnt,
+                reply_cnt,
+                file_cnt
+            from
+                tbl_article
+            where
+                article_no > 0
+        ]]>
+            <include refid="search" />
+        <![CDATA[
+            order by
+                article_no desc,
+                reg_date desc
+            limit
+                #{pageStart},
+                #{perPageNum}
+        ]]>
+    </select>
+
+    <select id="countSearchedArticles" resultType="int">
+        <![CDATA[
+            select
+                count(article_no)
+            from
+                tbl_article
+            where
+                article_no > 0
+        ]]>
+        <include refid="search"/>
+    </select>
+
+	<!--게시글 댓글 수 갱신-->
+	<update id="updateReplyCnt">
+		update tbl_article
+		set reply_cnt = reply_cnt + #{amount}
+		where article_no = #{articleNo}
+	</update>
+
+	<!--게시글 조회수 증가처리-->
+	<update id="updateViewCnt">
+		update tbl_article
+		set view_cnt = view_cnt + 1
+		where article_no = #{articleNo}
+	</update>
+
+    <sql id="search">
+        <if test="searchType != null">
+            <if test="searchType == 't'.toString()">
+                and title like concat('%', #{keyword}, '%')
+            </if>
+            <if test="searchType == 'c'.toString()">
+                and content like concat('%', #{keyword}, '%')
+            </if>
+            <if test="searchType == 'w'.toString()">
+                and writer like concat('%', #{keyword}, '%')
+            </if>
+            <if test="searchType == 'tc'.toString()">
+                and (
+                    title like concat('%', #{keyword}, '%')
+                    or content like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="searchType == 'cw'.toString()">
+                and (
+                    content like concat('%', #{keyword}, '%')
+                    or writer like concat('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="searchType == 'tcw'.toString()">
+                and (
+                    title like concat('%', #{keyword}, '%')
+                    or content like concat('%', #{keyword}, '%')
+                    or writer like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </if>
+    </sql>
+
+    <!--자바변수와 DB칼럼명이 다른경우 사용
+        <select>태그의 resultType 속성 대신 resultMap 속성으로 변경
+        resultMap을 통해 자바 객체 간의 관계(1:N / N:1 / N:N)를 설정할 수도 있고
+        다수의 DB테이블의 join 쿼리의 결과를 가져올 수도 있다-->
+    <resultMap id="ArticleResultMap" type="ArticleVO">
+        <id property="articleNo" column="article_no" />
+        <result property="title" column="title" />
+        <result property="content" column="content" />
+        <result property="writer" column="writer" />
+        <result property="regDate" column="reg_date" />
+        <result property="viewCnt" column="view_cnt" />
+	    <result property="replyCnt" column="reply_cnt" />
+	    <result property="fileCnt" column="file_cnt" />
+    </resultMap>
+
+</mapper>

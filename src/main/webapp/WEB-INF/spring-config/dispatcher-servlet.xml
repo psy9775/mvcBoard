@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--스프링 MVC관련 설정만을 분리하기 위한 설정 XML-->
+
+    <!--애너테이션 인식-->
+    <mvc:annotation-driven/>
+
+    <!--정적자원 매핑-->
+    <mvc:resources mapping="/resources/**" location="/resources/"/>
+
+    <!--viewResolver 설정-->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!--base-package 속성 값에 해당하는 패키지 내부의 클래스들을 모두 조사-->
+    <context:component-scan base-package="com.doubles.mvcboard"/>
+    <mvc:resources mapping="/bower_components/**" location="/resources/bower_components/" />
+    <mvc:resources mapping="/plugins/**" location="/resources/plugins/" />
+    <mvc:resources mapping="/dist/**" location="/resources/dist/" />
+
+	<!--AspectJ 라이브러리를 통해 Porxy객체를 생성하는 용도로 사용-->
+	<aop:aspectj-autoproxy />
+
+	<!--파일 업로드 MulitpartResolver 설정-->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="10485760" /> <!--10MB-->
+	</bean>
+	
+	<!--로그인 interceptor-->
+	<bean id="loginInterceptor" class="com.doubles.mvcboard.commons.interceptor.LoginInterceptor" />
+	
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/user/loginPost" />
+			<ref bean="loginInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+</beans>
